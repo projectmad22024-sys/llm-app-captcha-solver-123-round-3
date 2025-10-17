@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Captcha Solver</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  #captcha-image { border: 1px solid #ccc; margin-top: 10px; }
+  #result { margin-top: 10px; font-weight: bold; }
+  button { margin-top: 10px; padding: 8px 16px; }
+</style>
+</head>
+<body>
+<h1>Captcha Solver</h1>
+<p>Enter the URL of the captcha image (defaults to sample):</p>
+<input type="text" id="imageUrl" size="80" value="https://yourdomain.com/sample.png" />
+<button id="loadBtn">Load Image</button>
+<div>
+  <img id="captcha-image" src="" alt="Captcha Image" />
+</div>
+<div>
+  <label for="userInput">Enter text:</label>
+  <input type="text" id="userInput" />
+  <button id="solveBtn">Solve</button>
+</div>
+<div id="result"></div>
+<script>
+(function() {
+  const loadBtn = document.getElementById('loadBtn');
+  const solveBtn = document.getElementById('solveBtn');
+  const imageUrlInput = document.getElementById('imageUrl');
+  const captchaImage = document.getElementById('captcha-image');
+  const resultDiv = document.getElementById('result');
+  const userInput = document.getElementById('userInput');
+
+  function loadImage() {
+    let url = imageUrlInput.value.trim();
+    if (!url) {
+      alert('Please enter an image URL.');
+      return;
+    }
+    captchaImage.src = url;
+    resultDiv.textContent = '';
+    userInput.value = '';
+  }
+
+  async function solveCaptcha() {
+    const url = imageUrlInput.value.trim();
+    if (!captchaImage.src) {
+      alert('Load an image first.');
+      return;
+    }
+    resultDiv.textContent = 'Processing...';
+    try {
+      const response = await fetch('/api/solve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: captchaImage.src })
+      });
+      if (!response.ok) {
+        throw new Error('Error communicating with server');
+      }
+      const data = await response.json();
+      resultDiv.textContent = 'Predicted Text: ' + data.text;
+    } catch (err) {
+      resultDiv.textContent = 'Error: ' + err.message;
+    }
+  }
+
+  loadBtn.addEventListener('click', loadImage);
+  solveBtn.addEventListener('click', solveCaptcha);
+  // Load default image on startup
+  window.addEventListener('load', loadImage);
+})();
+</script>
+</body>
+</html>
